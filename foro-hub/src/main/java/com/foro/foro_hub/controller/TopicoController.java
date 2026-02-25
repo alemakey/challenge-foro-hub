@@ -1,11 +1,16 @@
 package com.foro.foro_hub.controller;
 
-import com.foro.foro_hub.domain.topico.Topico;
-import com.foro.foro_hub.domain.topico.TopicoRepository;
+import com.foro.foro_hub.domain.topico.*;
+import com.foro.foro_hub.infra.errores.ValidacionException;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.List;
+import java.net.URI;
 
 @RestController
 @RequestMapping("/topicos")
@@ -17,40 +22,62 @@ public class TopicoController {
         this.topicoRepository = topicoRepository;
     }
 
+    // Listar todos los tópicos activos con paginación
     @GetMapping
-    public List<Topico> listar() {
-        return topicoRepository.findAll();
+    public Page<DatosListadoTopico> listar(@PageableDefault(size = 10, sort = "fechaCreacion") Pageable paginacion) {
+        return topicoRepository.findAllByActivoTrue(paginacion).map(DatosListadoTopico::new);
     }
 
+    // Detalle de un tópico específico
     @GetMapping("/{id}")
-    public ResponseEntity<Topico> detalle(@PathVariable Long id) {
+    public ResponseEntity<DatosRespuestaTopico> detalle(@PathVariable Long id) {
         return topicoRepository.findById(id)
-                .map(ResponseEntity::ok)
+                .filter(Topico::getActivo)
+                .map(t -> ResponseEntity.ok(new DatosRespuestaTopico(t)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Crear nuevo tópico con validación de duplicados
     @PostMapping
-    public ResponseEntity<Topico> crear(@RequestBody Topico datos) {
-        Topico topico = topicoRepository.save(datos);
-        return ResponseEntity.status(201).body(topico);
+    public ResponseEntity<DatosRespuestaTopico> crear(
+            @RequestBody @Valid DatosRegistroTopico datos,
+            UriComponentsBuilder uriBuilder) {
+
+        // Validación de negocio: no permitir tópicos duplicados
+        if (topicoRepository.existsByTituloAndMensaje(datos.titulo(), datos.mensaje())) {
+            throw new ValidacionException("Ya existe un tópico con el mismo título y mensaje.");
+        }
+
+        Topico topico = topicoRepository.save(new Topico(datos));
+        URI uri = uriBuilder.path("/topicos/{id}").buildAndExpand(topico.getId()).toUri();
+        return ResponseEntity.created(uri).body(new DatosRespuestaTopico(topico));
     }
 
+    // Actualizar tópico
     @PutMapping("/{id}")
-    public ResponseEntity<Topico> actualizar(@PathVariable Long id, @RequestBody Topico datos) {
-        return topicoRepository.findById(id).map(topico -> {
-            if (datos.getTitulo() != null) {
-                topico = new Topico(datos.getTitulo(), datos.getMensaje(), datos.getCurso());
-            }
-            return ResponseEntity.ok(topicoRepository.save(topico));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<DatosRespuestaTopico> actualizar(
+            @PathVariable Long id,
+            @RequestBody @Valid DatosActualizarTopico datos) {
+
+        return topicoRepository.findById(id)
+                .filter(Topico::getActivo)
+                .map(topico -> {
+                    topico.actualizar(datos);
+                    return ResponseEntity.ok(new DatosRespuestaTopico(topicoRepository.save(topico)));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 
+    // Eliminar tópico (soft delete)
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        if (!topicoRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        topicoRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return topicoRepository.findById(id)
+                .filter(Topico::getActivo)
+                .map(topico -> {
+                    topico.desactivar();
+                    topicoRepository.save(topico);
+                    return ResponseEntity.<Void>noContent().build();
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }
