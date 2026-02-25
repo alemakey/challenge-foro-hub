@@ -78,6 +78,6 @@ public class TopicoController {
                     topicoRepository.save(topico);
                     return ResponseEntity.<Void>noContent().build();
                 })
-                .orElse(ResponseEntity.notFound().build());
+                .orElse(ResponseEntity.<Void>notFound().build());
     }
 }
