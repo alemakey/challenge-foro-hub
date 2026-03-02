@@ -1,5 +1,6 @@
 package com.foro.foro_hub.domain.topico;
 
+import com.foro.foro_hub.domain.usuario.Usuario;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -12,22 +13,28 @@ public class Topico {
     private Long id;
 
     private String titulo;
-
     private String mensaje;
-
     private String curso;
 
     private LocalDateTime fechaCreacion = LocalDateTime.now();
+
+    @Enumerated(EnumType.STRING)
+    private StatusTopico status = StatusTopico.ABIERTO;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "autor_id", nullable = false)
+    private Usuario autor;
 
     private Boolean activo = true;
 
     public Topico() {
     }
 
-    public Topico(DatosRegistroTopico datos) {
+    public Topico(DatosRegistroTopico datos, Usuario autor) {
         this.titulo = datos.titulo();
         this.mensaje = datos.mensaje();
         this.curso = datos.curso();
+        this.autor = autor;
     }
 
     public void actualizar(DatosActualizarTopico datos) {
@@ -39,6 +46,9 @@ public class Topico {
         }
         if (datos.curso() != null && !datos.curso().isBlank()) {
             this.curso = datos.curso();
+        }
+        if (datos.status() != null) {
+            this.status = datos.status();
         }
     }
 
@@ -64,6 +74,14 @@ public class Topico {
 
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
+    }
+
+    public StatusTopico getStatus() {
+        return status;
+    }
+
+    public Usuario getAutor() {
+        return autor;
     }
 
     public Boolean getActivo() {

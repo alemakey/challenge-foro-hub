@@ -8,8 +8,9 @@ public record DatosRespuestaTopico(
         String mensaje,
         String curso,
         LocalDateTime fechaCreacion,
-        Boolean activo
-) {
+        StatusTopico status,
+        String autor,
+        Boolean activo) {
     public DatosRespuestaTopico(Topico topico) {
         this(
                 topico.getId(),
@@ -17,7 +18,8 @@ public record DatosRespuestaTopico(
                 topico.getMensaje(),
                 topico.getCurso(),
                 topico.getFechaCreacion(),
-                topico.getActivo()
-        );
+                topico.getStatus(),
+                topico.getAutor().getUsername(),
+                topico.getActivo());
     }
 }

@@ -1,12 +1,14 @@
 package com.foro.foro_hub.controller;
 
 import com.foro.foro_hub.domain.topico.*;
+import com.foro.foro_hub.domain.usuario.Usuario;
 import com.foro.foro_hub.infra.errores.ValidacionException;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -25,7 +27,8 @@ public class TopicoController {
 
     // Listar todos los tópicos activos con paginación
     @GetMapping
-    public Page<DatosListadoTopico> listar(@PageableDefault(size = 10, sort = "fechaCreacion") Pageable paginacion) {
+    public Page<DatosListadoTopico> listar(
+            @PageableDefault(size = 10, sort = "fechaCreacion") Pageable paginacion) {
         return topicoRepository.findAllByActivoTrue(paginacion).map(DatosListadoTopico::new);
     }
 
@@ -38,25 +41,26 @@ public class TopicoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Crear nuevo tópico con validación de duplicados
+    // Crear nuevo tópico — el autor se obtiene del JWT autenticado
     @PostMapping
+    @Transactional
     public ResponseEntity<DatosRespuestaTopico> crear(
             @RequestBody @Valid DatosRegistroTopico datos,
+            @AuthenticationPrincipal Usuario usuarioAutenticado,
             UriComponentsBuilder uriBuilder) {
 
-        // Validación de negocio: no permitir tópicos duplicados
         if (topicoRepository.existsByTituloAndMensaje(datos.titulo(), datos.mensaje())) {
             throw new ValidacionException("Ya existe un tópico con el mismo título y mensaje.");
         }
 
-        Topico topico = topicoRepository.save(new Topico(datos));
+        Topico topico = topicoRepository.save(new Topico(datos, usuarioAutenticado));
         URI uri = uriBuilder.path("/topicos/{id}").buildAndExpand(topico.getId()).toUri();
         return ResponseEntity.created(uri).body(new DatosRespuestaTopico(topico));
     }
 
-    // Actualizar tópico
-    @Transactional
+    // Actualizar tópico (título, mensaje, curso y/o status)
     @PutMapping("/{id}")
+    @Transactional
     public ResponseEntity<DatosRespuestaTopico> actualizar(
             @PathVariable Long id,
             @RequestBody @Valid DatosActualizarTopico datos) {
@@ -71,16 +75,17 @@ public class TopicoController {
     }
 
     // Eliminar tópico (soft delete)
-    @Transactional
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        return topicoRepository.findById(id)
+        var topico = topicoRepository.findById(id)
                 .filter(Topico::getActivo)
-                .map(topico -> {
-                    topico.desactivar();
-                    topicoRepository.save(topico);
-                    return ResponseEntity.<Void>noContent().build();
-                })
-                .orElseGet(() -> ResponseEntity.<Void>notFound().build());
+                .orElse(null);
+        if (topico == null) {
+            return ResponseEntity.<Void>notFound().build();
+        }
+        topico.desactivar();
+        topicoRepository.save(topico);
+        return ResponseEntity.<Void>noContent().build();
     }
 }
