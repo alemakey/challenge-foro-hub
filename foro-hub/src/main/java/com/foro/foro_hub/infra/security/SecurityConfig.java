@@ -28,7 +28,6 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(req -> {
                     req.requestMatchers(HttpMethod.POST, "/login").permitAll();
-                    req.requestMatchers(HttpMethod.POST, "/setup").permitAll();
                     req.requestMatchers("/h2-console/**").permitAll();
                     req.anyRequest().authenticated();
                 })

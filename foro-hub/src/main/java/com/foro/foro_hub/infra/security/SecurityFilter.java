@@ -24,17 +24,22 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
         var authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             var token = authHeader.replace("Bearer ", "");
-            var login = tokenService.getSubject(token);
-            var usuario = usuarioRepository.findByLogin(login);
-            if (usuario != null) {
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        usuario, null, usuario.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            try {
+                var login = tokenService.getSubject(token);
+                var usuario = usuarioRepository.findByLogin(login);
+                if (usuario != null) {
+                    var authentication = new UsernamePasswordAuthenticationToken(
+                            usuario, null, usuario.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (RuntimeException e) {
+                // Token inválido o expirado: no autenticar la request.
+                // Spring Security devolverá 401 Unauthorized automáticamente.
             }
         }
         filterChain.doFilter(request, response);

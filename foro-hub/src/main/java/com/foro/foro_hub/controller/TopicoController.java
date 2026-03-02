@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -54,6 +55,7 @@ public class TopicoController {
     }
 
     // Actualizar tópico
+    @Transactional
     @PutMapping("/{id}")
     public ResponseEntity<DatosRespuestaTopico> actualizar(
             @PathVariable Long id,
@@ -69,6 +71,7 @@ public class TopicoController {
     }
 
     // Eliminar tópico (soft delete)
+    @Transactional
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         return topicoRepository.findById(id)
@@ -78,6 +81,6 @@ public class TopicoController {
                     topicoRepository.save(topico);
                     return ResponseEntity.<Void>noContent().build();
                 })
-                .orElse(ResponseEntity.<Void>notFound().build());
+                .orElseGet(() -> ResponseEntity.<Void>notFound().build());
     }
 }

@@ -1,7 +1,6 @@
 package com.foro.foro_hub.domain.topico;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,13 +11,10 @@ public class Topico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
     private String titulo;
 
-    @NotBlank
     private String mensaje;
 
-    @NotBlank
     private String curso;
 
     private LocalDateTime fechaCreacion = LocalDateTime.now();
@@ -50,10 +46,27 @@ public class Topico {
         this.activo = false;
     }
 
-    public Long getId() { return id; }
-    public String getTitulo() { return titulo; }
-    public String getMensaje() { return mensaje; }
-    public String getCurso() { return curso; }
-    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
-    public Boolean getActivo() { return activo; }
+    public Long getId() {
+        return id;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public String getMensaje() {
+        return mensaje;
+    }
+
+    public String getCurso() {
+        return curso;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
 }
