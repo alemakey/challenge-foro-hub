@@ -12,19 +12,27 @@ public class Topico {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, length = 300)
     private String titulo;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String mensaje;
+
+    @Column(nullable = false, length = 100)
     private String curso;
 
+    @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private StatusTopico status = StatusTopico.ABIERTO;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "autor_id", nullable = false)
     private Usuario autor;
 
+    @Column(nullable = false)
     private Boolean activo = true;
 
     public Topico() {

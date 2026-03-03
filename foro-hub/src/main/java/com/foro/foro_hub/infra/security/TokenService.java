@@ -4,12 +4,12 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.foro.foro_hub.domain.usuario.Usuario;
+import com.foro.foro_hub.infra.errores.TokenInvalidoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class TokenService {
@@ -32,7 +32,7 @@ public class TokenService {
 
     public String getSubject(String token) {
         if (token == null) {
-            throw new RuntimeException("Token nulo");
+            throw new TokenInvalidoException("Token nulo");
         }
         try {
             Algorithm algorithm = Algorithm.HMAC256(apiSecret);
@@ -42,11 +42,12 @@ public class TokenService {
                     .verify(token)
                     .getSubject();
         } catch (JWTVerificationException exception) {
-            throw new RuntimeException("Token JWT invalido: " + exception.getMessage());
+            throw new TokenInvalidoException("Token JWT inválido: " + exception.getMessage());
         }
     }
 
+    // Fix #6: sin offset hardcodeado — usa Instant.now() que es siempre UTC
     private Instant generarFechaExpiracion() {
-        return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-05:00"));
+        return Instant.now().plus(2, ChronoUnit.HOURS);
     }
 }

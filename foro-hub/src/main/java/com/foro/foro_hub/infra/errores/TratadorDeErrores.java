@@ -1,6 +1,7 @@
 package com.foro.foro_hub.infra.errores;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -31,11 +32,17 @@ public class TratadorDeErrores {
         return ResponseEntity.badRequest().body(new DatosErrorGenerico(ex.getMessage()));
     }
 
+    @ExceptionHandler(TokenInvalidoException.class)
+    public ResponseEntity<DatosErrorGenerico> tratarTokenInvalido(TokenInvalidoException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new DatosErrorGenerico(ex.getMessage()));
+    }
+
     private record DatosErrorValidacion(String campo, String error) {
         DatosErrorValidacion(FieldError fieldError) {
             this(fieldError.getField(), fieldError.getDefaultMessage());
         }
     }
 
-    private record DatosErrorGenerico(String mensaje) {}
+    private record DatosErrorGenerico(String mensaje) {
+    }
 }

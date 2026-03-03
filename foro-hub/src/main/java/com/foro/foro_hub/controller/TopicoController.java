@@ -1,6 +1,11 @@
 package com.foro.foro_hub.controller;
 
-import com.foro.foro_hub.domain.topico.*;
+import com.foro.foro_hub.domain.topico.DatosActualizarTopico;
+import com.foro.foro_hub.domain.topico.DatosListadoTopico;
+import com.foro.foro_hub.domain.topico.DatosRegistroTopico;
+import com.foro.foro_hub.domain.topico.DatosRespuestaTopico;
+import com.foro.foro_hub.domain.topico.Topico;
+import com.foro.foro_hub.domain.topico.TopicoRepository;
 import com.foro.foro_hub.domain.usuario.Usuario;
 import com.foro.foro_hub.infra.errores.ValidacionException;
 import jakarta.validation.Valid;
@@ -49,8 +54,9 @@ public class TopicoController {
             @AuthenticationPrincipal Usuario usuarioAutenticado,
             UriComponentsBuilder uriBuilder) {
 
-        if (topicoRepository.existsByTituloAndMensaje(datos.titulo(), datos.mensaje())) {
-            throw new ValidacionException("Ya existe un tópico con el mismo título y mensaje.");
+        // Fix #7: solo verifica duplicados entre tópicos activos
+        if (topicoRepository.existsByTituloAndMensajeAndActivoTrue(datos.titulo(), datos.mensaje())) {
+            throw new ValidacionException("Ya existe un tópico activo con el mismo título y mensaje.");
         }
 
         Topico topico = topicoRepository.save(new Topico(datos, usuarioAutenticado));
@@ -82,10 +88,10 @@ public class TopicoController {
                 .filter(Topico::getActivo)
                 .orElse(null);
         if (topico == null) {
-            return ResponseEntity.<Void>notFound().build();
+            return ResponseEntity.notFound().build();
         }
         topico.desactivar();
         topicoRepository.save(topico);
-        return ResponseEntity.<Void>noContent().build();
+        return ResponseEntity.noContent().build();
     }
 }

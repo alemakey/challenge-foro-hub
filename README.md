@@ -9,7 +9,7 @@ API REST para gestionar un foro de discusión. Permite crear, listar, actualizar
 ## 🚀 Tecnologías
 
 - Java 17
-- Spring Boot 3.2.3
+- Spring Boot 3.4.3
 - Spring Security + JWT (Auth0)
 - Spring Data JPA + H2 (in-memory)
 - Bean Validation (Jakarta)
@@ -18,20 +18,24 @@ API REST para gestionar un foro de discusión. Permite crear, listar, actualizar
 ## ▶️ Cómo ejecutar
 
 ### Requisitos
+
 - Java 17+
 - Maven (o usar el `mvnw` incluido)
 
 ### Variables de entorno
+
 ```bash
 # Secreto para firmar tokens JWT (mínimo 32 caracteres recomendado)
 JWT_SECRET=mi-secreto-super-seguro-de-32-chars
 ```
 
 ### Ejecutar en desarrollo
+
 ```bash
 cd foro-hub
 ./mvnw spring-boot:run
 ```
+
 La API quedará disponible en `http://localhost:8080`
 
 ---
@@ -40,11 +44,12 @@ La API quedará disponible en `http://localhost:8080`
 
 Todos los endpoints (excepto `/login`) requieren un token JWT en el header:
 
-```
+```text
 Authorization: Bearer <token>
 ```
 
 ### Obtener token
+
 ```http
 POST /login
 Content-Type: application/json
@@ -54,7 +59,9 @@ Content-Type: application/json
   "clave": "contraseña"
 }
 ```
+
 **Respuesta:**
+
 ```json
 { "token": "eyJhbGciOiJI..." }
 ```
@@ -63,16 +70,17 @@ Content-Type: application/json
 
 ## 📡 Endpoints
 
-| Método | Ruta | Descripción | Auth requerida |
-|--------|------|-------------|----------------|
-| `POST` | `/login` | Autenticar usuario y obtener JWT | ❌ |
-| `GET` | `/topicos` | Listar tópicos activos (paginado) | ✅ |
-| `GET` | `/topicos/{id}` | Detalle de un tópico | ✅ |
-| `POST` | `/topicos` | Crear nuevo tópico | ✅ |
-| `PUT` | `/topicos/{id}` | Actualizar tópico | ✅ |
-| `DELETE` | `/topicos/{id}` | Desactivar tópico (soft delete) | ✅ |
+| Método   | Ruta            | Descripción                       | Auth requerida |
+| -------- | --------------- | --------------------------------- | -------------- |
+| `POST`   | `/login`        | Autenticar usuario y obtener JWT  | ❌             |
+| `GET`    | `/topicos`      | Listar tópicos activos (paginado) | ✅             |
+| `GET`    | `/topicos/{id}` | Detalle de un tópico              | ✅             |
+| `POST`   | `/topicos`      | Crear nuevo tópico                | ✅             |
+| `PUT`    | `/topicos/{id}` | Actualizar tópico                 | ✅             |
+| `DELETE` | `/topicos/{id}` | Desactivar tópico (soft delete)   | ✅             |
 
 ### Crear tópico
+
 ```http
 POST /topicos
 Authorization: Bearer <token>
@@ -86,7 +94,8 @@ Content-Type: application/json
 ```
 
 ### Paginación
-```
+
+```text
 GET /topicos?page=0&size=10&sort=fechaCreacion,asc
 ```
 
@@ -94,7 +103,7 @@ GET /topicos?page=0&size=10&sort=fechaCreacion,asc
 
 ## 🗂️ Estructura del proyecto
 
-```
+```text
 src/main/java/com/foro/foro_hub/
 ├── controller/
 │   ├── AuthController.java        # Login y generación de JWT

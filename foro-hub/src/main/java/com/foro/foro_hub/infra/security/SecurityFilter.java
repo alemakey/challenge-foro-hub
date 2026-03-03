@@ -1,11 +1,11 @@
 package com.foro.foro_hub.infra.security;
 
 import com.foro.foro_hub.domain.usuario.UsuarioRepository;
+import com.foro.foro_hub.infra.errores.TokenInvalidoException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -16,11 +16,13 @@ import java.io.IOException;
 @Component
 public class SecurityFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private TokenService tokenService;
+    private final TokenService tokenService;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    public SecurityFilter(TokenService tokenService, UsuarioRepository usuarioRepository) {
+        this.tokenService = tokenService;
+        this.usuarioRepository = usuarioRepository;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -37,7 +39,7 @@ public class SecurityFilter extends OncePerRequestFilter {
                             usuario, null, usuario.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
-            } catch (RuntimeException e) {
+            } catch (TokenInvalidoException e) {
                 // Token inválido o expirado: no autenticar la request.
                 // Spring Security devolverá 401 Unauthorized automáticamente.
             }
